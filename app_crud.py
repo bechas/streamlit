@@ -7,12 +7,7 @@ import random
 def create_connection():
     """Cria e retorna uma conexão com o banco de dados MySQL."""
     try:
-        con = mysql.connector.connect(
-            host="localhost",  # Endereço do servidor MySQL
-            user="root",  # Nome de usuário do MySQL
-            password="12345",  # Senha do MySQL
-            database="estoque"  # Nome do banco de dados
-        )
+        con = st.connection('mysql', type='sql')
         print("Conexão estabelecida com o banco de dados MySQL!")
         return con
     except mysql.connector.Error as e:
