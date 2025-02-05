@@ -4,7 +4,7 @@ import random
 
 # Função para estabelecer conexão com o banco de dados MySQL
 
-    """Cria e retorna uma conexão com o banco de dados MySQL."""
+# Cria e retorna uma conexão com o banco de dados MySQL.
     try:
         con = st.connection('mysql', type='sql')
         print("Conexão estabelecida com o banco de dados MySQL!")
