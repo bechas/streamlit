@@ -1,6 +1,5 @@
 import streamlit as st
-import pandas as pd
-import random
+
 
 # Função para estabelecer conexão com o banco de dados MySQL
 
@@ -20,7 +19,7 @@ if con:
 def main():
     st.title("Sistema de Estoque")
     # Opções de operações CRUD
-    option = st.sidebar.selectbox("Selecione uma opção", ("Adicione", "Veja", "Atualize", "Exclua", "Pesquisar", "Total de produto", "Total de valor", "teste"))
+    option = st.sidebar.selectbox("Selecione uma opção", ("Adicione", "Veja", "Atualize", "Exclua", "Pesquisar", "Total de produto", "Total de valor"))
 
     if option == "Adicione":
         st.subheader("Adicione um produto")
@@ -217,20 +216,7 @@ def main():
         for row in result:
             valor_total = valor_total + (row[7] * row[6])
         st.subheader(f"Total de produtos no estoque: {valor_total}")
-    
-    #teste tabela
-    elif option == "teste":
-        df = pd.DataFrame(
-        {
-            "Command": ["**st.table**", "*st.dataframe*"],
-            "Type": ["`static`", "`interactive`"],
-            "Docs": [
-                "[:rainbow[docs]](https://docs.streamlit.io/develop/api-reference/data/st.dataframe)",
-                "[:book:](https://docs.streamlit.io/develop/api-reference/data/st.table)",
-            ],
-        }
-        )
-        st.table(df)
+
 # Executa a aplicação
 if __name__ == "__main__":
     main()
