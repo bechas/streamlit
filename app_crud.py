@@ -3,18 +3,18 @@ import pandas as pd
 import random
 
 # Função para estabelecer conexão com o banco de dados MySQL
-def create_connection():
+
     """Cria e retorna uma conexão com o banco de dados MySQL."""
     try:
         con = st.connection('mysql', type='sql')
         print("Conexão estabelecida com o banco de dados MySQL!")
         return con
-    except mysql.connector.Error as e:
+    except as e:
         print(f"Erro ao conectar com o banco de dados MySQL: {e}")
         return None
 
 # Estabelece a conexão e cria o cursor
-con = create_connection()
+
 if con:
     cursor = con.cursor()
 
