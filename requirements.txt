@@ -1,2 +1,5 @@
 mysqlclient==2.2.7
 SQLAlchemy==1.3.24
+streamlit
+pandas
+scikit-learn
