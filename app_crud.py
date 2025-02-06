@@ -6,7 +6,7 @@ import streamlit as st
 # Cria e retorna uma conexão com o banco de dados MySQL.
 
 con = st.connection(
-    'mysql',
+    dialect = 'mysql',
     type='sql',
     username='root',
     password='12345',
