@@ -3,3 +3,4 @@ SQLAlchemy
 streamlit
 pandas
 mysql-connector-python
+psycopg2
