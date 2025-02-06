@@ -2,33 +2,78 @@ import streamlit as st
 import mysql.connector
 
 # Função para estabelecer conexão com o banco de dados MySQL
+def get_db_connection():
+    try:
+        con = mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='12345',
+            database='estoque'
+        )
+        return con
+    except mysql.connector.Error as e:
+        st.error(f"Erro ao conectar ao banco de dados: {e}")
+        return None
 
-# Cria e retorna uma conexão com o banco de dados MySQL.
-
-con = st.connection(
-    name = "estoque",
-    dialect = 'mysql',
-    type='sql',
-    username='root',
-    password='12345',
-    host='localhost',
-    port=3306,
-    database='estoque'
-)
+# Estabelece a conexão
+con = get_db_connection()
+cursor = con.cursor()
 if con:
-    print("Conexão estabelecida com o banco de dados MySQL!")
+    st.success("Conexão estabelecida com o banco de dados MySQL!")
 else:
-    print("Erro de conexão")
+    st.error("Erro de conexão")
 
-# Estabelece a conexão e cria o cursor
+# Funções para operações no banco de dados
+def add_product(nome, marca, descricao, dt_compra, dt_val, quantidade, valor):
+    try:
+        cursor = con.cursor()
+        cursor.execute(
+            "INSERT INTO produtos (nome, marca, descricao, dt_compra, dt_val, quantidade, valor) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (nome, marca, descricao, dt_compra, dt_val, quantidade, valor)
+        )
+        con.commit()
+        st.success("Produto adicionado com sucesso!")
+    except Exception as e:
+        st.error(f"Erro ao adicionar produto: {e}")
+    finally:
+        cursor.close()
 
-if con:
-    cursor = con.cursor()
+def update_product(id, nome, marca, descricao, dt_compra, dt_val, quantidade, valor):
+    try:
+        cursor = con.cursor()
+        cursor.execute(
+        """
+        UPDATE produtos
+        SET nome = %s, marca = %s, descricao = %s, dt_compra = %s, dt_val = %s, quantidade = %s, valor = %s
+        WHERE id = %s
+        """,
+        (nome, marca, descricao, dt_compra, dt_val, quantidade, valor, id)
+        )
+        con.commit()
+        st.success("Produto atualizado com sucesso!")
+    except Exception as e:
+        st.error(f"Erro ao atualizar produto: {e}")
+    finally:
+        cursor.close()
+def view_products():
+    try:
+        cursor = con.cursor()
+        cursor.execute("SELECT * FROM produtos")
+        result = cursor.fetchall()
+        if result:
+            for row in result:
+                st.write(f"| ID: {row[0]} | Nome: {row[1]} | Marca: {row[2]} | Descrição: {row[3]} | Data da compra: {row[4]} | Data de validade: {row[5]} | Quantidade: {row[6]} | Valor: {row[7]} |")
+                st.divider()
+        else:
+            st.info("Nenhum registro encontrado.")
+    except Exception as e:
+        st.error(f"Erro ao buscar produtos: {e}")
+    finally:
+        cursor.close()
 
 # Função principal da aplicação
 def main():
     st.title("Sistema de Estoque")
-    # Opções de operações CRUD
     option = st.sidebar.selectbox("Selecione uma opção", ("Adicione", "Veja", "Atualize", "Exclua", "Pesquisar", "Total de produto", "Total de valor"))
 
     if option == "Adicione":
@@ -38,37 +83,22 @@ def main():
         descricao = st.text_input("Entre com a descrição")
         dt_compra = st.date_input("Entre com a data da compra")
         dt_val = st.date_input("Entre com a data de validade")
-        quantidade = st.number_input("Entre com a quantidade")
-        valor = st.number_input("Entre com o valor")
+        quantidade = st.number_input("Entre com a quantidade", min_value=0)
+        valor = st.number_input("Entre com o valor", min_value=0.0)
+
         if st.button("Adicione"):
-            try:
-                cursor.execute(
-                    "INSERT INTO produtos (nome, marca, descricao, dt_compra, dt_val, quantidade, valor) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                    (nome, marca, descricao, dt_compra, dt_val, quantidade, valor)
-                )
-                con.commit()
-                st.success("Produto adicionado com sucesso!")
-            except Exception as e:
-                st.error(f"Error: {e}")
+            if nome and marca and descricao and dt_compra and dt_val and quantidade and valor:
+                add_product(nome, marca, descricao, dt_compra, dt_val, quantidade, valor)
+            else:
+                st.error("Preencha todos os campos!")
 
     elif option == "Veja":
         st.subheader("Veja o estoque")
-        try:
-            cursor.execute("SELECT * FROM produtos")
-            result = cursor.fetchall()
-            if result:
-                for row in result:
-                    st.write(f"| ID: {row[0]} | Nome: {row[1]} | Marca: {row[2]} | Descrição: {row[3]} | Data da compra: {row[4]} | Data de validade: {row[5]} | Quantidade: {row[6]} | Valor: {row[7]} |")
-                    st.divider()
-            else:
-                st.info("Nenhum registro encontrado.")
-        except Exception as e:
-            st.error(f"Error: {e}")
+        view_products()
 
     elif option == "Atualize":
         st.subheader("Atualize produtos")
         id = st.number_input("Digite o ID do produto", min_value=1)
-
         try:
             cursor.execute("SELECT nome, marca, descricao, dt_compra, dt_val, quantidade, valor FROM produtos WHERE id = %s", (id,))
             result = cursor.fetchone()
@@ -85,23 +115,14 @@ def main():
                 dt_val = st.date_input("Entre com a data de validade", value=result[4])
                 quantidade = st.number_input("Entre com a quantidade", value=int(result[5]))
                 valor = st.number_input("Entre com o valor", value=float(result[6]))
-
                 if st.button("Atualizar"):
                     try:
-                        cursor.execute(
-                            """
-                            UPDATE produtos
-                            SET nome = %s, marca = %s, descricao = %s, dt_compra = %s, dt_val = %s, quantidade = %s, valor = %s
-                            WHERE id = %s
-                            """,
-                            (nome, marca, descricao, dt_compra, dt_val, quantidade, valor, id)
-                        )
-                        con.commit()
-                        st.success("Produto atualizado com sucesso!")
+                        update_product(id, nome, marca, descricao, dt_compra, dt_val, quantidade, valor)
                     except Exception as e:
                         st.error(f"Erro ao atualizar produto: {e}")
         except Exception as e:
-            st.error(f"Erro de conexão: {e}")
+            st.error(f"Erro ao atualizar produto: {e}")     
+
 
     elif option == "Exclua":
         st.subheader("Exclua um produto")
@@ -113,6 +134,7 @@ def main():
                 st.success("Produto excluído com sucesso!")
             except Exception as e:
                 st.error(f"Error: {e}")
+
     elif option == "Pesquisar":
         st.subheader("Pesquise produtos")
         choice = st.selectbox("Escolha o campo que deseja pesquisar", ["Nome", "Marca", "Descrição", "Data de compra", "Data de validade", "Quantidade", "Valor"])
@@ -208,6 +230,7 @@ def main():
                     st.write("Nenhum resultado encontrado")
             except Exception as e:
                         st.error(f"Error: {e}")
+
 
     #Total de produto
     elif option == "Total de produto":
