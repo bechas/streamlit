@@ -15,10 +15,10 @@ con = st.connection(
     port=3306,
     database='estoque'
 )
-con = st.connection('mysql', type='sql')
-print("Conexão estabelecida com o banco de dados MySQL!")
-
-
+if con:
+    print("Conexão estabelecida com o banco de dados MySQL!")
+else:
+    print("Erro de conexão")
 
 # Estabelece a conexão e cria o cursor
 
