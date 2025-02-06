@@ -13,7 +13,7 @@ def get_db_connection():
         port="5432"         # porta do PostgreSQL
         )
         return con
-    except OperationalError as e:
+    except Exceotion as e:
         st.error(f"Erro ao conectar ao banco de dados: {e}")
         return None
 
