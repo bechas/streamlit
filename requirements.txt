@@ -2,4 +2,4 @@ mysqlclient
 SQLAlchemy
 streamlit
 pandas
-
+mysql-connector-python
