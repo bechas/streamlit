@@ -1,14 +1,16 @@
 import streamlit as st
-import mysql.connector
+import psycopg2
+from psycopg2 import sql
 
 # Função para estabelecer conexão com o banco de dados MySQL
 def get_db_connection():
     try:
-        con = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='12345',
-            database='estoque'
+        con = psycopg2.connect(
+        dbname="postgres",  # nome do banco de dados
+        user="postgres",    # seu nome de usuário
+        password="Amoracolorida1!",  # sua senha
+        host="db.wcwiozumyufdtskudlvi.supabase.co",  # endereço do servidor
+        port="5432"         # porta do PostgreSQL
         )
         return con
     except mysql.connector.Error as e:
