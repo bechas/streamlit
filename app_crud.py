@@ -10,7 +10,13 @@ password = os.getenv(
 )
 def get_db_connection():
     try:
-        con = st.connection("supabase",type=SupabaseConnection)
+        con = psycopg2.connect(
+        dbname="postgres",  # nome do banco de dados
+        user="postgres",    # seu nome de usuário
+        password="Amoracolorida1!",  # sua senha
+        host="db.wcwiozumyufdtskudlvi.supabase.co",  # endereço do servidor
+        port="5432"         # porta do PostgreSQL
+        )
         return con
     except Exception as e:
         st.error(f"Erro ao conectar ao banco de dados: {e}")
