@@ -1,8 +1,12 @@
 import streamlit as st
 import psycopg2
 from psycopg2 import sql
+import os
 
 # Função para estabelecer conexão com o banco de dados MySQL
+password = os.getenv(
+"Amoracolorida1!"
+)
 def get_db_connection():
     try:
         con = psycopg2.connect(
