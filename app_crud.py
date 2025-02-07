@@ -5,9 +5,7 @@ import os
 from st_supabase_connection import SupabaseConnection
 
 # Função para estabelecer conexão com o banco de dados MySQL
-password = os.getenv(
-"Amoracolorida1!"
-)
+
 def get_db_connection():
     try:
         con = psycopg2.connect(
