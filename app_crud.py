@@ -23,7 +23,7 @@ def get_db_connection():
 
 # Estabelece a conexão
 con = get_db_connection()
-
+cursor = con.cursor()
 if con:
     st.success("Conexão estabelecida com o banco de dados MySQL!")
 else:
