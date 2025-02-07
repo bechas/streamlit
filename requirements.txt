@@ -4,3 +4,4 @@ streamlit
 pandas
 mysql-connector-python
 psycopg2-binary
+st-supabase-connection
