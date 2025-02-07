@@ -11,6 +11,7 @@ password = os.getenv(
 def get_db_connection():
     try:
         con = psycopg2.connect(
+        dialect="postgres",
         dbname="estoque",  # nome do banco de dados
         user="postgres",    # seu nome de usuário
         password="Amoracolorida1!",  # sua senha
