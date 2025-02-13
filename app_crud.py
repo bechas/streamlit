@@ -1,80 +1,90 @@
 import streamlit as st
-import psycopg2
-from psycopg2 import sql
+from supabase import create_client, Client
 import os
-from st_supabase_connection import SupabaseConnection
 
-# Função para estabelecer conexão com o banco de dados MySQL
+# Configurações do Supabase
+SUPABASE_URL = "https://wcwiozumyufdtskudlvi.supabase.co"  # Substitua pelo seu URL do Supabase
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indjd2lvenVteXVmZHRza3VkbHZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg4NjkxNDUsImV4cCI6MjA1NDQ0NTE0NX0.LReEt_mCPdGlvlbqn7y_Sw00X8_31xZRPsKw_W_6K48"  # Substitua pela sua chave de API do Supabase
 
-def get_db_connection():
-    try:
-        con = psycopg2.connect(
-        dbname="estoque",  # nome do banco de dados
-        user="postgres",    # seu nome de usuário
-        password="Amoracolorida1!",  # sua senha
-        host="db.wcwiozumyufdtskudlvi.supabase.co",  # endereço do servidor
-        port="5432"         # porta do PostgreSQL
-        )
-        return con
-    except Exception as e:
-        st.error(f"Erro ao conectar ao banco de dados: {e}")
-        return None
-
-# Estabelece a conexão
-con = get_db_connection()
-cursor = con.cursor()
-if con:
-    st.success("Conexão estabelecida com o banco de dados MySQL!")
-else:
-    st.error("Erro de conexão")
+# Inicializa o cliente do Supabase
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Funções para operações no banco de dados
 def add_product(nome, marca, descricao, dt_compra, dt_val, quantidade, valor):
     try:
-        cursor = con.cursor()
-        cursor.execute(
-            "INSERT INTO produtos (nome, marca, descricao, dt_compra, dt_val, quantidade, valor) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-            (nome, marca, descricao, dt_compra, dt_val, quantidade, valor)
-        )
-        con.commit()
+        supabase.table("produtos").insert({
+            "nome": nome,
+            "marca": marca,
+            "descricao": descricao,
+            "dt_compra": dt_compra.isoformat(),
+            "dt_val": dt_val.isoformat(),
+            "quantidade": quantidade,
+            "valor": valor
+        }).execute()
         st.success("Produto adicionado com sucesso!")
     except Exception as e:
         st.error(f"Erro ao adicionar produto: {e}")
-    finally:
-        cursor.close()
 
 def update_product(id, nome, marca, descricao, dt_compra, dt_val, quantidade, valor):
     try:
-        cursor = con.cursor()
-        cursor.execute(
-        """
-        UPDATE produtos
-        SET nome = %s, marca = %s, descricao = %s, dt_compra = %s, dt_val = %s, quantidade = %s, valor = %s
-        WHERE id = %s
-        """,
-        (nome, marca, descricao, dt_compra, dt_val, quantidade, valor, id)
-        )
-        con.commit()
+        supabase.table("produtos").update({
+            "nome": nome,
+            "marca": marca,
+            "descricao": descricao,
+            "dt_compra": dt_compra.isoformat(),
+            "dt_val": dt_val.isoformat(),
+            "quantidade": quantidade,
+            "valor": valor
+        }).eq("id", id).execute()
         st.success("Produto atualizado com sucesso!")
     except Exception as e:
         st.error(f"Erro ao atualizar produto: {e}")
-    finally:
-        cursor.close()
+
 def view_products():
     try:
-        cursor = con.cursor()
-        cursor.execute("SELECT * FROM produtos")
-        result = cursor.fetchall()
-        if result:
-            for row in result:
-                st.write(f"| ID: {row[0]} | Nome: {row[1]} | Marca: {row[2]} | Descrição: {row[3]} | Data da compra: {row[4]} | Data de validade: {row[5]} | Quantidade: {row[6]} | Valor: {row[7]} |")
+        result = supabase.table("produtos").select("*").execute()
+        if result.data:
+            for row in result.data:
+                st.write(f"| ID: {row['id']} | Nome: {row['nome']} | Marca: {row['marca']} | Descrição: {row['descricao']} | Data da compra: {row['dt_compra']} | Data de validade: {row['dt_val']} | Quantidade: {row['quantidade']} | Valor: {row['valor']} |")
                 st.divider()
         else:
             st.info("Nenhum registro encontrado.")
     except Exception as e:
         st.error(f"Erro ao buscar produtos: {e}")
-    finally:
-        cursor.close()
+
+def delete_product(id):
+    try:
+        supabase.table("produtos").delete().eq("id", id).execute()
+        st.success("Produto excluído com sucesso!")
+    except Exception as e:
+        st.error(f"Erro ao excluir produto: {e}")
+
+def search_products(field, value):
+    try:
+        result = supabase.table("produtos").select("*").eq(field, value).execute()
+        if result.data:
+            for row in result.data:
+                st.write(f"| ID: {row['id']} | Nome: {row['nome']} | Marca: {row['marca']} | Descrição: {row['descricao']} | Data da compra: {row['dt_compra']} | Data de validade: {row['dt_val']} | Quantidade: {row['quantidade']} | Valor: {row['valor']} |")
+        else:
+            st.write("Nenhum resultado encontrado")
+    except Exception as e:
+        st.error(f"Erro ao buscar produtos: {e}")
+
+def total_products():
+    try:
+        result = supabase.table("produtos").select("*").execute()
+        quantidade_total = sum(row['quantidade'] for row in result.data)
+        st.subheader(f"Total de produtos no estoque: {quantidade_total}")
+    except Exception as e:
+        st.error(f"Erro ao calcular total de produtos: {e}")
+
+def total_value():
+    try:
+        result = supabase.table("produtos").select("*").execute()
+        valor_total = sum(row['valor'] * row['quantidade'] for row in result.data)
+        st.subheader(f"Total de valor no estoque: {valor_total}")
+    except Exception as e:
+        st.error(f"Erro ao calcular total de valor: {e}")
 
 # Função principal da aplicação
 def main():
@@ -105,155 +115,75 @@ def main():
         st.subheader("Atualize produtos")
         id = st.number_input("Digite o ID do produto", min_value=1)
         try:
-            cursor.execute("SELECT nome, marca, descricao, dt_compra, dt_val, quantidade, valor FROM produtos WHERE id = %s", (id,))
-            result = cursor.fetchone()
-
-            # Verifica se o produto existe no banco
-            if not result:
+            result = supabase.table("produtos").select("*").eq("id", id).execute()
+            if not result.data:
                 st.error("Produto não encontrado!")
             else:
-                # Exibe os valores para edição
-                nome = st.text_input("Entre com o nome", value=result[0])
-                marca = st.text_input("Entre com a marca", value=result[1])
-                descricao = st.text_input("Entre com a descrição", value=result[2])
-                dt_compra = st.date_input("Entre com a data da compra", value=result[3])
-                dt_val = st.date_input("Entre com a data de validade", value=result[4])
-                quantidade = st.number_input("Entre com a quantidade", value=int(result[5]))
-                valor = st.number_input("Entre com o valor", value=float(result[6]))
+                row = result.data[0]
+                nome = st.text_input("Entre com o nome", value=row['nome'])
+                marca = st.text_input("Entre com a marca", value=row['marca'])
+                descricao = st.text_input("Entre com a descrição", value=row['descricao'])
+                dt_compra = st.date_input("Entre com a data da compra", value=row['dt_compra'])
+                dt_val = st.date_input("Entre com a data de validade", value=row['dt_val'])
+                quantidade = st.number_input("Entre com a quantidade", value=row['quantidade'])
+                valor = st.number_input("Entre com o valor", value=row['valor'])
                 if st.button("Atualizar"):
-                    try:
-                        update_product(id, nome, marca, descricao, dt_compra, dt_val, quantidade, valor)
-                    except Exception as e:
-                        st.error(f"Erro ao atualizar produto: {e}")
+                    update_product(id, nome, marca, descricao, dt_compra, dt_val, quantidade, valor)
         except Exception as e:
-            st.error(f"Erro ao atualizar produto: {e}")     
-
+            st.error(f"Erro ao atualizar produto: {e}")
 
     elif option == "Exclua":
         st.subheader("Exclua um produto")
         id = st.number_input("Digite o ID do produto", min_value=1)
         if st.button("Excluir"):
-            try:
-                cursor.execute("DELETE FROM produtos WHERE id = %s", (id,))
-                con.commit()
-                st.success("Produto excluído com sucesso!")
-            except Exception as e:
-                st.error(f"Error: {e}")
+            delete_product(id)
 
     elif option == "Pesquisar":
         st.subheader("Pesquise produtos")
         choice = st.selectbox("Escolha o campo que deseja pesquisar", ["Nome", "Marca", "Descrição", "Data de compra", "Data de validade", "Quantidade", "Valor"])
-        #NOME
         if choice == "Nome":
             pesquisa = st.text_input("Digite o nome a ser pesquisado")
-            try:
-                cursor.execute("SELECT id, nome, marca, descricao, dt_compra, dt_val, quantidade, valor FROM produtos WHERE nome LIKE %s;", (f"%{pesquisa}%",))
-                result = cursor.fetchall()
-                if result:
-                    for row in result:
-                        st.write(f"| ID: {row[0]} | Nome: {row[1]} | Marca: {row[2]} | Descrição: {row[3]} | Data da compra: {row[4]} | Data de validade: {row[5]} | Quantidade: {row[6]} | Valor: {row[7]} |")
-                else:
-                    st.write("Nenhum resultado encontrado")
-            except Exception as e:
-                st.error(f"Error: {e}")
-        #MARCA
+            if pesquisa:
+                search_products("nome", pesquisa)
         elif choice == "Marca":
             pesquisa = st.text_input("Digite a marca a ser pesquisada")
-            try:
-                cursor.execute("SELECT id, nome, marca, descricao, dt_compra, dt_val, quantidade, valor FROM produtos WHERE marca LIKE %s;", (f"%{pesquisa}%",))
-                result = cursor.fetchall()
-                if result:
-                    for row in result:
-                        st.write(f"| ID: {row[0]} | Nome: {row[1]} | Marca: {row[2]} | Descrição: {row[3]} | Data da compra: {row[4]} | Data de validade: {row[5]} | Quantidade: {row[6]} | Valor: {row[7]} |")
-                else:
-                    st.write("Nenhum resultado encontrado")
-            except Exception as e:
-                st.error(f"Error: {e}")
-        #DESCRICAO
+            if pesquisa:
+                search_products("marca", pesquisa)
         elif choice == "Descrição":
             pesquisa = st.text_input("Digite a descricao a ser pesquisada")
-            try:
-                cursor.execute("SELECT id, nome, marca, descricao, dt_compra, dt_val, quantidade, valor FROM produtos WHERE descricao LIKE %s;", (f"%{pesquisa}%",))
-                result = cursor.fetchall()
-                if result:
-                    for row in result:
-                        st.write(f"| ID: {row[0]} | Nome: {row[1]} | Marca: {row[2]} | Descrição: {row[3]} | Data da compra: {row[4]} | Data de validade: {row[5]} | Quantidade: {row[6]} | Valor: {row[7]} |")
-                else:
-                        st.write("Nenhum resultado encontrado")
-            except Exception as e:
-                    st.error(f"Error: {e}")
-        #DATA DE COMPRA
+            if pesquisa:
+                search_products("descricao", pesquisa)
         elif choice == "Data de compra":
             pesquisa = st.date_input("Coloque a data a ser pesquisada")
-            try:
-                cursor.execute("SELECT id, nome, marca, descricao, dt_compra, dt_val, quantidade, valor FROM produtos WHERE dt_compra = %s;", (pesquisa,))
-                result = cursor.fetchall()
-                if result:
-                    for row in result:
-                        st.write(f"| ID: {row[0]} | Nome: {row[1]} | Marca: {row[2]} | Descrição: {row[3]} | Data da compra: {row[4]} | Data de validade: {row[5]} | Quantidade: {row[6]} | Valor: {row[7]} |")
-                else:
-                    st.write("Nenhum resultado encontrado")
-            except Exception as e:
-                        st.error(f"Error: {e}")
-        #DATA DE VALIDADE
+            if pesquisa:
+                search_products("dt_compra", pesquisa.isoformat())
         elif choice == "Data de validade":
             pesquisa1 = st.date_input("Insira a primeira data do periodo")
             pesquisa2 = st.date_input("Insira a segunda data do periodo")
-            try:
-                cursor.execute("SELECT id, nome, marca, descricao, dt_compra, dt_val, quantidade, valor FROM produtos WHERE dt_val BETWEEN %s AND %s;", (pesquisa1, pesquisa2,))
-                result = cursor.fetchall()
-                if result:
-                    for row in result:
-                        st.write(f"| ID: {row[0]} | Nome: {row[1]} | Marca: {row[2]} | Descrição: {row[3]} | Data da compra: {row[4]} | Data de validade: {row[5]} | Quantidade: {row[6]} | Valor: {row[7]} |")
-                else:
-                    st.write("Nenhum resultado encontrado")
-            except Exception as e:
-                        st.error(f"Error: {e}")
-        #QUANTIDADE
+            if pesquisa1 and pesquisa2:
+                try:
+                    result = supabase.table("produtos").select("*").gte("dt_val", pesquisa1.isoformat()).lte("dt_val", pesquisa2.isoformat()).execute()
+                    if result.data:
+                        for row in result.data:
+                            st.write(f"| ID: {row['id']} | Nome: {row['nome']} | Marca: {row['marca']} | Descrição: {row['descricao']} | Data da compra: {row['dt_compra']} | Data de validade: {row['dt_val']} | Quantidade: {row['quantidade']} | Valor: {row['valor']} |")
+                    else:
+                        st.write("Nenhum resultado encontrado")
+                except Exception as e:
+                    st.error(f"Erro ao buscar produtos: {e}")
         elif choice == "Quantidade":
             pesquisa = st.number_input("Coloque a quantidade a ser pesquisada")
-            try:
-                cursor.execute("SELECT id, nome, marca, descricao, dt_compra, dt_val, quantidade, valor FROM produtos WHERE quantidade = %s;", (pesquisa,))
-                result = cursor.fetchall()
-                if result:
-                    for row in result:
-                        st.write(f"| ID: {row[0]} | Nome: {row[1]} | Marca: {row[2]} | Descrição: {row[3]} | Data da compra: {row[4]} | Data de validade: {row[5]} | Quantidade: {row[6]} | Valor: {row[7]} |")
-                else:
-                    st.write("Nenhum resultado encontrado")
-            except Exception as e:
-                        st.error(f"Error: {e}")
-        #VALOR
+            if pesquisa:
+                search_products("quantidade", pesquisa)
         elif choice == "Valor":
             pesquisa = st.number_input("Coloque o valor a ser pesquisado")
-            try:
-                cursor.execute("SELECT id, nome, marca, descricao, dt_compra, dt_val, quantidade, valor FROM produtos WHERE valor = %s;", (pesquisa,))
-                result = cursor.fetchall()
-                if result:
-                    for row in result:
-                        st.write(f"| ID: {row[0]} | Nome: {row[1]} | Marca: {row[2]} | Descrição: {row[3]} | Data da compra: {row[4]} | Data de validade: {row[5]} | Quantidade: {row[6]} | Valor: {row[7]} |")
-                else:
-                    st.write("Nenhum resultado encontrado")
-            except Exception as e:
-                        st.error(f"Error: {e}")
+            if pesquisa:
+                search_products("valor", pesquisa)
 
-
-    #Total de produto
     elif option == "Total de produto":
-        cursor.execute("SELECT * FROM produtos;")
-        result = cursor.fetchall()
-        quantidade_total = 0
-        for row in result:
-            quantidade_total = quantidade_total + row[6]
-        st.subheader(f"Total de produtos no estoque: {quantidade_total}")
+        total_products()
 
-    #Total de valor
     elif option == "Total de valor":
-        cursor.execute("SELECT * FROM produtos;")
-        result = cursor.fetchall()
-        valor_total = 0
-        for row in result:
-            valor_total = valor_total + (row[7] * row[6])
-        st.subheader(f"Total de produtos no estoque: {valor_total}")
+        total_value()
 
 # Executa a aplicação
 if __name__ == "__main__":
