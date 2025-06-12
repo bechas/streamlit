@@ -3,8 +3,8 @@ from supabase import create_client, Client
 import os
 
 # Configurações do Supabase
-SUPABASE_URL = "https://wcwiozumyufdtskudlvi.supabase.co"  # Substitua pelo seu URL do Supabase
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indjd2lvenVteXVmZHRza3VkbHZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg4NjkxNDUsImV4cCI6MjA1NDQ0NTE0NX0.LReEt_mCPdGlvlbqn7y_Sw00X8_31xZRPsKw_W_6K48"  # Substitua pela sua chave de API do Supabase
+SUPABASE_URL = "https://mwvjsdxbnraqjamjdtqy.supabase.co"  # Substitua pelo seu URL do Supabase
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13dmpzZHhibnJhcWphbWpkdHF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MzM3MjYsImV4cCI6MjA2NTMwOTcyNn0.y2JkLAWU3u6bwTvY8jbjQSH0cnohwffkC7ER5YHMaFg"  # Substitua pela sua chave de API do Supabase
 
 # Inicializa o cliente do Supabase
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
