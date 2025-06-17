@@ -1,6 +1,7 @@
 import streamlit as st
 from supabase import create_client, Client
 import os
+from datetime import datetime
 
 # Configurações do Supabase
 SUPABASE_URL = "https://mwvjsdxbnraqjamjdtqy.supabase.co"  # Substitua pelo seu URL do Supabase
@@ -12,7 +13,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # Funções para operações no banco de dados
 def add_product(nome, marca, descricao, dt_compra, dt_val, quantidade, valor):
     try:
-        supabase.table("produtos").insert({
+        supabase.table("produtos_estoque").insert({
             "nome": nome,
             "marca": marca,
             "descricao": descricao,
@@ -27,7 +28,7 @@ def add_product(nome, marca, descricao, dt_compra, dt_val, quantidade, valor):
 
 def update_product(id, nome, marca, descricao, dt_compra, dt_val, quantidade, valor):
     try:
-        supabase.table("produtos").update({
+        supabase.table("produtos_estoque").update({
             "nome": nome,
             "marca": marca,
             "descricao": descricao,
@@ -42,7 +43,7 @@ def update_product(id, nome, marca, descricao, dt_compra, dt_val, quantidade, va
 
 def view_products():
     try:
-        result = supabase.table("produtos").select("*").execute()
+        result = supabase.table("produtos_estoque").select("*").execute()
         if result.data:
             for row in result.data:
                 st.write(f"| ID: {row['id']} | Nome: {row['nome']} | Marca: {row['marca']} | Descrição: {row['descricao']} | Data da compra: {row['dt_compra']} | Data de validade: {row['dt_val']} | Quantidade: {row['quantidade']} | Valor: {row['valor']} |")
@@ -54,14 +55,14 @@ def view_products():
 
 def delete_product(id):
     try:
-        supabase.table("produtos").delete().eq("id", id).execute()
+        supabase.table("produtos_estoque").delete().eq("id", id).execute()
         st.success("Produto excluído com sucesso!")
     except Exception as e:
         st.error(f"Erro ao excluir produto: {e}")
 
 def search_products(field, value):
     try:
-        result = supabase.table("produtos").select("*").eq(field, value).execute()
+        result = supabase.table("produtos_estoque").select("*").eq(field, value).execute()
         if result.data:
             for row in result.data:
                 st.write(f"| ID: {row['id']} | Nome: {row['nome']} | Marca: {row['marca']} | Descrição: {row['descricao']} | Data da compra: {row['dt_compra']} | Data de validade: {row['dt_val']} | Quantidade: {row['quantidade']} | Valor: {row['valor']} |")
@@ -72,7 +73,7 @@ def search_products(field, value):
 
 def total_products():
     try:
-        result = supabase.table("produtos").select("*").execute()
+        result = supabase.table("produtos_estoque").select("*").execute()
         quantidade_total = sum(row['quantidade'] for row in result.data)
         st.subheader(f"Total de produtos no estoque: {quantidade_total}")
     except Exception as e:
@@ -80,7 +81,7 @@ def total_products():
 
 def total_value():
     try:
-        result = supabase.table("produtos").select("*").execute()
+        result = supabase.table("produtos_estoque").select("*").execute()
         valor_total = sum(row['valor'] * row['quantidade'] for row in result.data)
         st.subheader(f"Total de valor no estoque: {valor_total}")
     except Exception as e:
@@ -88,6 +89,7 @@ def total_value():
 
 # Função principal da aplicação
 def main():
+    st.set_page_config(page_title="Estoque", page_icon="🛒")
     st.title("Sistema de Estoque")
     option = st.sidebar.selectbox("Selecione uma opção", ("Adicione", "Veja", "Atualize", "Exclua", "Pesquisar", "Total de produto", "Total de valor"))
 
@@ -115,7 +117,7 @@ def main():
         st.subheader("Atualize produtos")
         id = st.number_input("Digite o ID do produto", min_value=1)
         try:
-            result = supabase.table("produtos").select("*").eq("id", id).execute()
+            result = supabase.table("produtos_estoque").select("*").eq("id", id).execute()
             if not result.data:
                 st.error("Produto não encontrado!")
             else:
@@ -123,8 +125,15 @@ def main():
                 nome = st.text_input("Entre com o nome", value=row['nome'])
                 marca = st.text_input("Entre com a marca", value=row['marca'])
                 descricao = st.text_input("Entre com a descrição", value=row['descricao'])
-                dt_compra = st.date_input("Entre com a data da compra", value=row['dt_compra'])
-                dt_val = st.date_input("Entre com a data de validade", value=row['dt_val'])
+                dt_compra = st.date_input(
+                    "Entre com a data da compra",
+                    value=datetime.strptime(row['dt_compra'], "%Y-%m-%d").date() if row['dt_compra'] else datetime.today().date()
+                )
+
+                dt_val = st.date_input(
+                    "Entre com a data de validade",
+                    value=datetime.strptime(row['dt_val'], "%Y-%m-%d").date() if row['dt_val'] else datetime.today().date()
+                )
                 quantidade = st.number_input("Entre com a quantidade", value=row['quantidade'])
                 valor = st.number_input("Entre com o valor", value=row['valor'])
                 if st.button("Atualizar"):
@@ -162,7 +171,7 @@ def main():
             pesquisa2 = st.date_input("Insira a segunda data do periodo")
             if pesquisa1 and pesquisa2:
                 try:
-                    result = supabase.table("produtos").select("*").gte("dt_val", pesquisa1.isoformat()).lte("dt_val", pesquisa2.isoformat()).execute()
+                    result = supabase.table("produtos_estoque").select("*").gte("dt_val", pesquisa1.isoformat()).lte("dt_val", pesquisa2.isoformat()).execute()
                     if result.data:
                         for row in result.data:
                             st.write(f"| ID: {row['id']} | Nome: {row['nome']} | Marca: {row['marca']} | Descrição: {row['descricao']} | Data da compra: {row['dt_compra']} | Data de validade: {row['dt_val']} | Quantidade: {row['quantidade']} | Valor: {row['valor']} |")
